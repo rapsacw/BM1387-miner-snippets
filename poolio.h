@@ -3,7 +3,7 @@
  * todo: submit result
  */
 /*
- * This is a snippit from my miner program under development, no guarantees on correctness!
+ * This is a snippet from my miner program under development, no guarantees on correctness!
  * nb: hardly any error/bounds checking (todo?)
  * expects global variables & defines:
  * #define miningaddr "yourminingaddress"
