@@ -129,6 +129,10 @@ int poolread(uint8_t *b) // read line from pool, return 1 for timeout, 2 for inv
 
   return tmout;
 }
+/*
+ *  Handle incomming pool message
+ *  Called whenever poolclient.available() == true in loop()
+ */
 
 int pool_message()
 {
@@ -197,7 +201,7 @@ int pool_message()
  *  assumes open connection to pool in poolclient, eg
  *  WiFiClient poolclient;
  *  poolclient.connect(POOL_URL, POOL_PORT);
- *  Called whenever poolclient.available() == true in loop()
+ *  Called in setup()
  */
 int poolConnect()
 {
