@@ -2,6 +2,7 @@
  * Prepare block header from pool data
  * increments ntime & xnonce2 for new jobs
  * expects global uint8_t m_header[80];
+ * m_xxx are binary representations of p_xxxx pool data variables
  */
 
 int zeroes_4 = 0;
