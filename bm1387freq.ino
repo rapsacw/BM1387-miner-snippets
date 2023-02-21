@@ -59,7 +59,7 @@ int BM1387Frequency(int freq)
   return 1;
 }
 
-// iterative routine (too lazy for loops) to find nearest/lower frequency if exact match isn't possible
+// recursive routine (too lazy for loops) to find nearest/lower frequency if exact match isn't possible
 int findnearest(uint16_t *m,int i,int offset)
 {
   int rv;
