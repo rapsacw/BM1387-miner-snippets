@@ -176,7 +176,6 @@ void Header_nextjob()
   {
     inc_4bin(m_ntime); // increment nTime
     strcpy(m_xnonce2,zeroes_8); // and reset xnonce2
-    m_Tbirth = millis();
   }
   else
   {
