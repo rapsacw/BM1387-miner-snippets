@@ -101,16 +101,6 @@ char *jsnskiplines(char *p,int i)
   if (i) p = jsnskiplines(p,i);
   return p;
 }
-char *pppppppppppppppjsnskiplines(char *p,int i)
-{
-  while(i)
-  {
-    while(*p) p++;
-    p++;
-    i--;
-  }
-  return p;
-}
 
 #define timeout 80000
 
