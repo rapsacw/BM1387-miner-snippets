@@ -2,7 +2,6 @@
  * Prepare block header from pool data
  * increments ntime & xnonce2 for new jobs
  * expects global uint8_t m_header[80];
- * m_xxx are binary representations of p_xxxx pool data variables
  */
 
 int zeroes_4 = 0;
@@ -126,7 +125,7 @@ void memcpy_reverse(void *dst, void *src,int len)
 }
 
 /*
- * Construct 80-byte header from (bin-to-hexed) pool data and assembled (ascii) coinbase transaction
+ * Construct 80-byte header from (hex-to-binned) pool data and assembled (ascii) coinbase transaction
  */
 void Header_construct()
 {
@@ -159,8 +158,6 @@ void Header_construct()
   memcpy_reverse(&m_header[68],m_nbits,4);
   memcpy(&m_header[72],m_ntime,4);
   memcpy(&m_header[76],&zeroes_4,4);
-
-  m_Tbirth = millis(); // time of creation of this header
 }
 /*
  * Create new job by incrementing ntime (binary) or xnonce2 (in situ ascii)
@@ -173,10 +170,12 @@ void Header_nextjob()
   int i;
 
   // increment ntime(binary) or xnonce2(ascii)
-  if((millis()-m_Tbirth)>1000) // roll nTime
-  {
+  // incrementing ntime is not needed really with 'low' hashrates.
+  if(labs(millis()-m_Tntime)>1000) // roll nTime, should only happen upto 60x according to 'the internet',
+  {                                // but most pools send new work in less than 60 seconds, so no need to limit it here ..
     inc_4bin(m_ntime); // increment nTime
     strcpy(m_xnonce2,zeroes_8); // and reset xnonce2
+    m_Tntime = millis(); // time of last change of ntime
   }
   else
   {
@@ -219,5 +218,6 @@ void header_makebin()
   m_xnonce2 = &p_coinbase[strlen(p_coinbase)];
   strcat(p_coinbase,zeroes_8);
   strcat(p_coinbase,p_coinb2);
+  m_Tntime = millis();
   Header_construct();
 }
