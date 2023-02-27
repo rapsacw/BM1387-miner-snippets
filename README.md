@@ -3,14 +3,20 @@ Code snippets for BM1387 miner
 
 (I'm using as little as possible libraries, and try to avoid any dynamic memory allocations, so no String type variables, classes etc. This to prevent memory leaks and code bulging. This does mean that most code is for single threaded use only!)
 
-All code is for reference only and still under construction/untested except:
-
-poolio.h - functional but still limited & blocking on connect
-
-bm1387freq.ino - fully tested but still contains tons of debug printfs
+All code is for reference only and still under construction/untested
 <br>
+<b>headerprep.h</b> - Seems to work
 <br>
-My mining software state:<br>
+Function: Builds binary (as in non-ascii bytes) bitcoin blockchain header from pool data
+<br>
+<b>poolio.h</b> - functional but still limited & blocking on connect<br>
+Function: Handles I/O to pool, saves relevant data in strings.
+<br>
+<b>bm1387freq.ino</b> - fully tested but still contains tons of debug printfs
+<br>
+Function: Sets BM1387 frequency to any possible value between 50-699MHz in user defined resolution<br>
+<br>
+<b>My mining software state:</b><br>
 <br>
 Right after startup:<br>
 <code>056fde77001b92 73972f049e5ab64237757e4ffd5a14721bbdc9f2ba27162c137f0aba9054c8e6
