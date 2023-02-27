@@ -2,7 +2,61 @@
  * Prepare block header from pool data
  * increments ntime & xnonce2 for new jobs
  * expects global uint8_t m_header[80];
- */
+ * and
+//              pool data, all ascii
+// from mining.subscribe
+char p_Jobid[20];     // Job id string
+char p_xnonce1[10];   // Extra nonce 1
+char p_xnonce2sz[4];  // Extra nonce 2 size
+// from mining.set_difficulty
+char p_ShareDif[8];   // Share difficulty ("10000", so left justified?)
+char p_sessionid[4];    //
+// from mining.notify
+char p_prevblockhash[66]; // hash of previous block header
+char p_coinb1[128];
+char p_coinb2[400];
+char p_partialmerkle[64*14+2]; // partial merkle tree
+char p_version[10];
+char p_nbits[10];
+char p_ntime[10];
+char p_clean[8];
+char p_coinbase[600];   // assembled coinbase transaction
+
+//              Mining parameters (all binary)
+int m_TicketDif;
+float m_TargetHashrate;     // Set hashrate in GH/s
+float m_tpm = 4.0;          // Target # tickets per minute (not yet implemented)
+int m_ShareDif;
+
+uint8_t m_version[4];
+uint8_t m_prevblockhash[32];
+uint8_t m_merkle[14][32];
+int     m_nmerkle;
+char  *m_xnonce2;           // pointer to xnonce2 position in p_coinbase
+uint8_t m_nbits[4];
+uint8_t m_ntime[4];
+long    m_Tntime;
+uint8_t m_header[80];
+uint8_t m_havework = 0;   // flag to signal work from pool available
+uint8_t m_mining = 0;     // flag to signal mining from pool
+// Asic parameters
+typedef struct
+{
+  uint16_t TargetFreq;
+  uint16_t RealFreq;
+  float    TargetHashrate;
+  long     ActiveDuration;
+  int      ValidNonces;
+} ASIC;
+int     a_nAsics;
+ASIC    a_asic[MAX_ASICS];
+// timers
+long rt,mi,st;
+// system
+#define LittleEndian 0
+#define BigEndian 1
+uint8_t s_endian;
+*/
 
 int zeroes_4 = 0;
 #define zeroes_8 "00000000"
@@ -125,7 +179,7 @@ void memcpy_reverse(void *dst, void *src,int len)
 }
 
 /*
- * Construct 80-byte header from (hex-to-binned) pool data and assembled (ascii) coinbase transaction
+ * Construct 80-byte header from (ascii-to-binned) pool data and assembled (ascii) coinbase transaction
  */
 void Header_construct()
 {
@@ -154,10 +208,13 @@ void Header_construct()
   // Construct binary header
   memcpy_reverse(m_header,&m_version,4);
   memcpy(&m_header[4],m_prevblockhash,32);
-  memcpy_reverse(&m_header[36],sha_coinmerkle,32);
-  memcpy_reverse(&m_header[68],m_nbits,4);
-  memcpy(&m_header[72],m_ntime,4);
+  memcpy(&m_header[36],sha_coinmerkle,32);
+  memcpy_reverse(&m_header[68],m_ntime,4);
+  memcpy_reverse(&m_header[72],m_nbits,4);
   memcpy(&m_header[76],&zeroes_4,4);
+  //CDCSER.println("header:");
+  //showresponse(m_header,80);
+  //CDCSER.println();
 }
 /*
  * Create new job by incrementing ntime (binary) or xnonce2 (in situ ascii)
@@ -218,6 +275,7 @@ void header_makebin()
   m_xnonce2 = &p_coinbase[strlen(p_coinbase)];
   strcat(p_coinbase,zeroes_8);
   strcat(p_coinbase,p_coinb2);
+
   m_Tntime = millis();
   Header_construct();
 }

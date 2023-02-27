@@ -6,29 +6,69 @@
  * This is a snippet from my miner program under development, no guarantees on correctness!
  * nb: hardly any error/bounds checking (todo?)
  * expects global variables & defines:
- * #define miningaddr "yourminingaddress"
- * // buffer for json from pool
- * char decjsnbuf[3000];
- * // for mining.subscribe
- * char p_Jobid[20];     // Job id string
- * char p_xnonce1[10];   // Extra nonce 1
- * char p_xnonce2sz[2];  // Extra nonce 2 size
- * // for mining.set_difficulty
- * char p_ShareDif[8];   // Share difficulty ("10000", so left justified?)
- * char p_sessionid[4];    //
- * // for mining.notify
- * char p_prevblockhash[66]; // hash of previous block header
- * char p_coinb1[128];
- * char p_coinb2[400];
- * char p_partialmerkle[64*14+2]; // partial merkle tree, enough room for ~2^14 transactions/block
- *                                // no seperator between hashes, new hash starts every 64 characters
- * char p_version[10];
- * char p_nbits[10];
- * char p_ntime[10];
- * char p_clean[8];
+#define miningaddr "yourminingaddress"
+#define POOL_PORT 3333
+#define JSONBUFFER_SZ 3000
+
+
+//              pool data, all ascii
+// from mining.subscribe
+char p_Jobid[20];     // Job id string
+char p_xnonce1[10];   // Extra nonce 1
+char p_xnonce2sz[4];  // Extra nonce 2 size
+// from mining.set_difficulty
+char p_ShareDif[8];   // Share difficulty ("10000", so left justified?)
+char p_sessionid[4];    //
+// from mining.notify
+char p_prevblockhash[66]; // hash of previous block header
+char p_coinb1[128];
+char p_coinb2[400];
+char p_partialmerkle[64*14+2]; // partial merkle tree
+char p_version[10];
+char p_nbits[10];
+char p_ntime[10];
+char p_clean[8];
+char p_coinbase[600];   // assembled coinbase transaction
+
+//              Mining parameters (all binary)
+int m_TicketDif;
+float m_TargetHashrate;     // Set hashrate in GH/s
+float m_tpm = 4.0;          // Target # tickets per minute (not yet implemented)
+int m_ShareDif;
+
+uint8_t m_version[4];
+uint8_t m_prevblockhash[32];
+uint8_t m_merkle[14][32];
+int     m_nmerkle;
+char  *m_xnonce2;           // pointer to xnonce2 position in p_coinbase
+uint8_t m_nbits[4];
+uint8_t m_ntime[4];
+long    m_Tntime;
+uint8_t m_header[80];
+uint8_t m_havework = 0;   // flag to signal work from pool available
+uint8_t m_mining = 0;     // flag to signal mining from pool
+// Asic parameters
+typedef struct
+{
+  uint16_t TargetFreq;
+  uint16_t RealFreq;
+  float    TargetHashrate;
+  long     ActiveDuration;
+  int      ValidNonces;
+} ASIC;
+int     a_nAsics;
+ASIC    a_asic[MAX_ASICS];
+// timers
+long rt,mi,st;
+// system
+#define LittleEndian 0
+#define BigEndian 1
+uint8_t s_endian;
 */
+
 #define mining_subscribe "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}\n"
 #define parprnt(a) { CDCSER.print(#a); CDCSER.print(":"); CDCSER.println(a); }
+void header_makebin(void); // in headerprep.h
 char *jp,*bp;
 
 void saveitem()
@@ -111,6 +151,7 @@ int poolread(uint8_t *b) // read line from pool, return 1 for timeout, 2 for inv
   char tmout = 0;
 
   t = millis()+timeout;
+  b[0] = 0;
   while(!poolclient.available()&& !tmout)
   {
      if(millis()>t) tmout = 1;
@@ -120,8 +161,8 @@ int poolread(uint8_t *b) // read line from pool, return 1 for timeout, 2 for inv
     do {
       b[i++] = poolclient.read();
       if(millis()>t) tmout = 1;
-    } while (i<3000 && b[i-1] != '\n' && !tmout);
-    if(tmout || i == 2000) tmout = 2;
+    } while (i<JSONBUFFER_SZ && b[i-1] != '\n' && !tmout);
+    if(tmout || i >= JSONBUFFER_SZ) tmout = 2;
   }
   else
   {
@@ -138,7 +179,7 @@ int poolread(uint8_t *b) // read line from pool, return 1 for timeout, 2 for inv
 
 int pool_message()
 {
-  uint8_t pool_data_rcv[4000];
+  uint8_t pool_data_rcv[JSONBUFFER_SZ];
   char method[20];
   char *p,*pm;
   int i,rv;
@@ -146,9 +187,11 @@ int pool_message()
   CDCSER.println("Handling incomming pool message");
   rv = poolread(pool_data_rcv);
   delay(0);
+  if(rv) { CDCSER.println("Error receiving from pool"); return 0;}
   CDCSER.print("Received: ");
   CDCSER.println((char *)pool_data_rcv);
   jsonstringify((char *)pool_data_rcv);
+  delay(0);
   CDCSER.println("Looking for method");
   p = decjsnbuf;
   delay(0);
@@ -210,6 +253,9 @@ int pool_message()
     p = jsnskiplines(p,1);
     strcpy(p_clean,p);
     parprnt(p_clean);
+    delay(0);
+    //header_makebin();
+    m_havework = 1; // flag to notify we have work data
   }
   return 0;
 }
