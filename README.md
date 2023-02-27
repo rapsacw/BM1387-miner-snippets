@@ -14,7 +14,7 @@ Function: Handles I/O to pool, saves relevant data in strings.
 <br>
 <b>bm1387freq.ino</b> - fully tested but still contains tons of debug printfs
 <br>
-Function: Sets BM1387 frequency to any possible value between 50-699MHz in user defined resolution<br>
+Function: Sets BM1387 frequency to any possible value between 50-799MHz in user defined resolution<br>
 <br>
 <b>My mining software state:</b><br>
 <br>
