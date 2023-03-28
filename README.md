@@ -1,5 +1,6 @@
 # BM1387-miner-snippets
-Code snippets for BM1387 miner
+Code snippets for BM1387 miner<br>
+OBSOLETE, all routines (updated and bug checked) can be found in my basic-BM1387-miner<br>
 
 (I'm using as little as possible libraries, and try to avoid any dynamic memory allocations, so no String type variables, classes etc. This to prevent memory leaks and code bulging. This does mean that most code is for single threaded use only!)
 
